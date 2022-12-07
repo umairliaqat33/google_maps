@@ -5,7 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:json_annotation/json_annotation.dart';
 
-part 'location.g.dart';
+part 'locations.g.dart';
 
 @JsonSerializable()
 class LatLng {
