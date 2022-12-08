@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps/src/locations.dart' as locations;
+import 'package:google_maps/model/locations.dart' as locations;
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -12,6 +12,7 @@ class GetLocation extends StatefulWidget {
 
 class _GetLocationState extends State<GetLocation> {
   final Map<String, Marker> _markers = {};
+
   Future<void> _onMapCreated(GoogleMapController controller) async {
     final googleOffices = await locations.getGoogleOffices();
     setState(() {

@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps/services/location_services.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -11,38 +14,17 @@ class MyGeoLocation extends StatefulWidget {
 }
 
 class _MyGeoLocationState extends State<MyGeoLocation> {
-  late GoogleMapController mapController;
-  final Map<String, Marker> _markers = {};
-
-  LatLng _center = const LatLng(0, 0);
-
-  void _onMapCreated(GoogleMapController controller) {
+  @override
+  void initState() {
+    super.initState();
     getLocation();
-    mapController = controller;
   }
 
   Future<void> getLocation() async {
-    _markers.clear();
-    bool locationPermission;
-    LocationPermission permission;
-
-    locationPermission = await Geolocator.isLocationServiceEnabled();
-    if (!locationPermission) {
-      return Future.error("Location Permission not allowed");
-    }
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-    Position position = await Geolocator.getCurrentPosition();
+    Position position = await LocationServices.getLocation();
     setState(() {
+      _center = LatLng(position.latitude, position.longitude);
+      log(_center.toString());
       final marker = Marker(
         markerId: const MarkerId("My location"),
         position: LatLng(position.latitude, position.longitude),
@@ -51,14 +33,22 @@ class _MyGeoLocationState extends State<MyGeoLocation> {
         ),
       );
       _markers['My Location'] = marker;
+      log(_markers.values.toString());
     });
-    setState(() {
-      _center = LatLng(position.latitude, position.longitude);
-    });
+  }
+
+  late GoogleMapController mapController;
+  final Map<String, Marker> _markers = {};
+
+  LatLng _center = const LatLng(0, 0);
+
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
   }
 
   @override
   Widget build(BuildContext context) {
+    log(_center.toString());
     return Scaffold(
       body: GoogleMap(
         onMapCreated: _onMapCreated,
@@ -68,6 +58,7 @@ class _MyGeoLocationState extends State<MyGeoLocation> {
         ),
         markers: _markers.values.toSet(),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () async => getLocation(),
         tooltip: 'Get current Location',
