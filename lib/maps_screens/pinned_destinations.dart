@@ -1,5 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class PinnedDestinations extends StatefulWidget {
   const PinnedDestinations({Key? key}) : super(key: key);
@@ -9,7 +14,6 @@ class PinnedDestinations extends StatefulWidget {
 }
 
 class _PinnedDestinationsState extends State<PinnedDestinations> {
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _destinationLatController =
       TextEditingController();
   final TextEditingController _destinationLonController =
@@ -17,14 +21,25 @@ class _PinnedDestinationsState extends State<PinnedDestinations> {
   final TextEditingController _beginningLatController = TextEditingController();
   final TextEditingController _beginningLonController = TextEditingController();
 
+  final _formKey = GlobalKey<FormState>();
+
   late GoogleMapController mapController;
   final Map<String, Marker> _markers = {};
   final Set<Polyline> _polyline = {};
+  late PolylinePoints polylinePoints;
+  final Set<LatLng> latLng = {};
+  final Set<LatLng> polyLineCoordinates = {};
 
   LatLng _center = const LatLng(
     31.581785,
     74.290329,
   );
+
+  @override
+  void initState() {
+    super.initState();
+    polylinePoints = PolylinePoints();
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -158,26 +173,62 @@ class _PinnedDestinationsState extends State<PinnedDestinations> {
       _center = LatLng(double.parse(_destinationLatController.text),
           double.parse(_destinationLonController.text));
     }
-    final Set<LatLng> latLng = {
+    latLng.add(
       LatLng(
         double.parse(_destinationLatController.text),
         double.parse(_destinationLonController.text),
       ),
+    );
+
+    latLng.add(
       LatLng(
         double.parse(_beginningLatController.text),
         double.parse(_beginningLonController.text),
       ),
-    };
-    _polyline.add(
-      Polyline(
-        polylineId: const PolylineId("Home To digital estimating"),
-        points: latLng.toList(),
-      ),
     );
+    _setPolyLine();
     setState(() {});
+  }
+
+  void _setPolyLine() async {
+    bool locationPermission = await Geolocator.isLocationServiceEnabled();
+    log("came in polyline functions");
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      'AIzaSyBG-VcZaKVIimxg6Gnm_vqUV5uY50u87RA',
+      PointLatLng(
+        double.parse(_beginningLatController.text),
+        double.parse(_beginningLonController.text),
+      ),
+      PointLatLng(
+        double.parse(_destinationLatController.text),
+        double.parse(_destinationLonController.text),
+      ),
+      travelMode: TravelMode.driving,
+    );
+    if (result.status == 'OK') {
+      for (var pointLatLng in result.points) {
+        polyLineCoordinates
+            .add(LatLng(pointLatLng.latitude, pointLatLng.longitude));
+      }
+      setState(() {
+        _polyline.add(
+          Polyline(
+            polylineId: const PolylineId('value'),
+            visible: true,
+            width: 10,
+            color: Colors.blue,
+            points: polyLineCoordinates.toList(),
+          ),
+        );
+      });
+    }
+    log(result.status.toString());
+    log(result.errorMessage.toString());
+    log(result.points.toString());
+    log(locationPermission.toString());
   }
 }
 //31.581785
-// 74.290329
+//74.290329
 //31.5107366
 //74.3397132
