@@ -14,6 +14,10 @@ class MyGeoLocation extends StatefulWidget {
 }
 
 class _MyGeoLocationState extends State<MyGeoLocation> {
+  LatLng _center = const LatLng(0, 0);
+  late GoogleMapController _mapController;
+  final Map<String, Marker> _markers = {};
+
   @override
   void initState() {
     super.initState();
@@ -34,16 +38,14 @@ class _MyGeoLocationState extends State<MyGeoLocation> {
       );
       _markers['My Location'] = marker;
       log(_markers.values.toString());
+      _mapController.animateCamera(
+        CameraUpdate.newLatLng(_center),
+      );
     });
   }
 
-  late GoogleMapController mapController;
-  final Map<String, Marker> _markers = {};
-
-  LatLng _center = const LatLng(0, 0);
-
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+    _mapController = controller;
   }
 
   @override
@@ -54,7 +56,7 @@ class _MyGeoLocationState extends State<MyGeoLocation> {
         onMapCreated: _onMapCreated,
         initialCameraPosition: CameraPosition(
           target: _center,
-          zoom: 11.0,
+          zoom: 15.0,
         ),
         markers: _markers.values.toSet(),
       ),

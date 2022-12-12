@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps/services/location_services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -23,7 +24,7 @@ class _PinnedDestinationsState extends State<PinnedDestinations> {
 
   final _formKey = GlobalKey<FormState>();
 
-  late GoogleMapController mapController;
+  late GoogleMapController _mapController;
   final Map<String, Marker> _markers = {};
   final Set<Polyline> _polyline = {};
   late PolylinePoints polylinePoints;
@@ -39,10 +40,24 @@ class _PinnedDestinationsState extends State<PinnedDestinations> {
   void initState() {
     super.initState();
     polylinePoints = PolylinePoints();
+    _getCenter();
+  }
+
+  void _getCenter() async {
+    Position position = await LocationServices.getLocation();
+    setState(() {
+      _center = LatLng(
+        position.latitude,
+        position.longitude,
+      );
+      _mapController.animateCamera(
+        CameraUpdate.newLatLng(_center),
+      );
+    });
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+    _mapController = controller;
   }
 
   @override
@@ -170,8 +185,6 @@ class _PinnedDestinationsState extends State<PinnedDestinations> {
         double.parse(_beginningLatController.text),
         double.parse(_beginningLonController.text),
       );
-      _center = LatLng(double.parse(_destinationLatController.text),
-          double.parse(_destinationLonController.text));
     }
     latLng.add(
       LatLng(
@@ -186,8 +199,14 @@ class _PinnedDestinationsState extends State<PinnedDestinations> {
         double.parse(_beginningLonController.text),
       ),
     );
+    setState(() {
+      _center = LatLng(double.parse(_destinationLatController.text),
+          double.parse(_beginningLonController.text));
+      _mapController.animateCamera(
+        CameraUpdate.newLatLng(_center),
+      );
+    });
     _setPolyLine();
-    setState(() {});
   }
 
   void _setPolyLine() async {
